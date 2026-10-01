@@ -44,6 +44,24 @@ const RESET_REQUESTS_PATH = ['artifacts', appId, 'public', 'data', 'password_res
 
 // --- Helper Components ---
 
+// عرض كلمة مرور مخفية مع زر إظهار/إخفاء
+const MaskedSecret = ({ value, className = '' }) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span className="font-mono">{visible ? value : '••••••••'}</span>
+      <button
+        type="button"
+        onClick={() => setVisible(v => !v)}
+        title={visible ? 'إخفاء' : 'إظهار'}
+        className="text-slate-400 hover:text-[#337159] p-0.5 rounded"
+      >
+        {visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+      </button>
+    </span>
+  );
+};
+
 const DiscountManager = ({ discounts, onChange, unitLabel }) => {
   const [minQty, setMinQty] = useState('');
   const [percent, setPercent] = useState('');
@@ -217,16 +235,6 @@ const AuthScreen = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    if (email === 'admin@print.com') {
-      onLoginSuccess({
-        email: 'admin@print.com',
-        name: 'المدير العام',
-        role: 'admin',
-        uid: 'admin-master-id'
-      });
-      return;
-    }
 
     try {
       const usersDocRef = doc(db, ...USERS_DB_PATH);
@@ -463,7 +471,7 @@ const UserManagement = ({ currentUser }) => {
         <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div><label className="block text-xs font-bold text-slate-600 mb-1">الاسم</label><input type="text" required value={newUserName} onChange={e => setNewUserName(e.target.value)} className="w-full p-2 rounded border border-[#b99ecb] focus:ring-2 focus:ring-[#337159] outline-none" /></div>
           <div><label className="block text-xs font-bold text-slate-600 mb-1">البريد الإلكتروني</label><input type="email" required value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} className="w-full p-2 rounded border border-[#b99ecb] focus:ring-2 focus:ring-[#337159] outline-none" /></div>
-          <div><label className="block text-xs font-bold text-slate-600 mb-1">كلمة المرور</label><input type="text" required value={newUserPass} onChange={e => setNewUserPass(e.target.value)} className="w-full p-2 rounded border border-[#b99ecb] focus:ring-2 focus:ring-[#337159] outline-none" placeholder="كلمة المرور" /></div>
+          <div><label className="block text-xs font-bold text-slate-600 mb-1">كلمة المرور</label><input type="password" autoComplete="new-password" required value={newUserPass} onChange={e => setNewUserPass(e.target.value)} className="w-full p-2 rounded border border-[#b99ecb] focus:ring-2 focus:ring-[#337159] outline-none" placeholder="كلمة المرور" /></div>
           <div><label className="block text-xs font-bold text-slate-600 mb-1">الدور (الصلاحية)</label><select value={newUserRole} onChange={e => setNewUserRole(e.target.value)} className="w-full p-2 rounded border border-[#b99ecb] focus:ring-2 focus:ring-[#337159] outline-none bg-white"><option value="employee">موظف (حاسبة فقط)</option><option value="admin">مسؤول (تحكم كامل)</option></select></div>
           <div className="md:col-span-2 mt-2"><button type="submit" disabled={loading} className="w-full bg-[#337159] hover:bg-[#2a5c48] text-white py-2 rounded-lg font-bold shadow transition-colors disabled:opacity-50">{loading ? 'جاري الإنشاء...' : 'إنشاء الحساب'}</button></div>
         </form>
@@ -485,7 +493,7 @@ const UserManagement = ({ currentUser }) => {
                 <div className="flex-1 text-sm">
                   <div className="font-bold text-slate-700">{req.name || 'مستخدم'}</div>
                   <div className="font-mono text-xs text-slate-500">{req.email}</div>
-                  <div className="text-xs mt-1">كلمة المرور الجديدة المطلوبة: <span className="font-mono font-bold text-[#fa5732] bg-[#fa5732]/10 px-2 py-0.5 rounded">{req.requestedPassword}</span></div>
+                  <div className="text-xs mt-1">كلمة المرور الجديدة المطلوبة: <MaskedSecret value={req.requestedPassword} className="font-bold text-[#fa5732] bg-[#fa5732]/10 px-2 py-0.5 rounded" /></div>
                   <div className="text-[10px] text-slate-400 mt-1">{new Date(req.createdAt).toLocaleString('ar-EG')}</div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -523,7 +531,7 @@ const UserManagement = ({ currentUser }) => {
                   const isSelf = currentUser && user.email.toLowerCase() === currentUser.email.toLowerCase();
                   return (
                   <tr key={idx} className="border-b hover:bg-slate-50">
-                    <td className="p-3">{user.name}</td><td className="p-3 font-mono text-xs">{user.email}</td><td className="p-3 font-mono text-xs text-slate-400">{user.password}</td>
+                    <td className="p-3">{user.name}</td><td className="p-3 font-mono text-xs">{user.email}</td><td className="p-3 text-xs text-slate-400"><MaskedSecret value={user.password} /></td>
                     <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'admin' ? 'bg-[#b99ecb]/20 text-[#b99ecb]' : 'bg-[#337159]/10 text-[#337159]'}`}>{user.role === 'admin' ? 'مسؤول' : 'موظف'}</span></td>
                     <td className="p-3 text-slate-400 text-xs">{new Date(user.createdAt).toLocaleDateString('ar-EG')}</td>
                     <td className="p-3 text-center">
